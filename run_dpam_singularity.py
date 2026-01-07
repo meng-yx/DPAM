@@ -68,12 +68,17 @@ def check_inputs(input_dir,dataset):
 
 
 def run_singularity_container(image_name, databases_dir, input_dir, dataset, threads, log_file):
+    
+    print("Constructing wdir...")
     wdir = f'/home/{input_dir.split("/")[-1]}'
 
     # Building the Singularity exec command with bind mounts
+    print("Constructing exec command...")
     exec_command = (
-        f"singularity exec --fakeroot --bind {databases_dir}:/mnt/databases:ro "
-        f"--bind {input_dir}:{wdir}:rw {image_name} "
+        f"singularity exec --bind {databases_dir}:/mnt/databases:ro "
+        f"--bind {input_dir}:{wdir}:rw "
+        f"--bind /scratch/ymeng/DPAM/docker/scripts/run_step3.py:/opt/DPAM/scripts/run_step3.py:ro "
+        f"{image_name} "
         f"/bin/bash -c 'cd {wdir};run_dpam.py {dataset} {threads}'"
     )
 
@@ -104,39 +109,48 @@ if __name__ == "__main__":
     parser.add_argument("--threads", type=int, default=os.cpu_count(), help="Number of threads. Default is to use all CPUs")
     parser.add_argument("--log_file", help="File to save the logs. Default is <dataset>_docker.log under <INPUT_DIR>.")
 
+    # Add debugging prints to check which step is so slow
+    print("Parsing arguments...")
     args = parser.parse_args()
-
+    
+    print("Checking singularity image existence...")
     image_flag = check_singularity_image_existence(args.image_name)
     if not image_flag:
         print(args.image_name, 'or Singularity does not exist!')
         sys.exit(1)
 
+    print("Checking databases...")
     db_flag = check_databases(args.databases_dir)
     if db_flag == 0:
         print("Databases are not complete")
         sys.exit(1)
 
+    print("Checking inputs...")
     input_flag = check_inputs(args.input_dir,args.dataset)
     if input_flag == 0:
         print('Error(s)! Inputs missing')
         sys.exit(1)
 
+    print("Checking input directory...")
     if '/' != args.input_dir[0]:
         path = os.path.join(os.getcwd(), args.input_dir)
         input_dir = os.path.abspath(path)
     else:
         input_dir = os.path.abspath(args.input_dir)
 
+    print("Checking databases directory...")
     if '/' != args.databases_dir[0]:
         path = os.path.join(os.getcwd(), args.databases_dir)
         databases_dir = os.path.abspath(path)
     else:
         databases_dir = os.path.abspath(args.databases_dir)
 
+    print("Checking log file...")
     if args.log_file is None:
         log_file = input_dir + '/' + args.dataset + '_docker.log'
     else:
         log_file = args.log_file
 
+    print("Starting run_singularity_container...")
     run_singularity_container(args.image_name,databases_dir, input_dir, args.dataset, args.threads,log_file)
 
