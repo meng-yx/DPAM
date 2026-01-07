@@ -9,29 +9,29 @@ def check_singularity_image_existence(image_path):
     else:
         return 1
 
-
-def check_databases(databases_dir):
-    path = os.getcwd()
-    flag = 1
-    if not os.path.exists(databases_dir):
-        print (databases_dir, 'does not exist')
-        flag = 0
-    else:
-        missing = []
-        with open(f'{databases_dir}/all_files') as f:
-            all_files = f.readlines()
-        all_files = [i.strip() for i in all_files]
-        for fn in all_files:
-            if not os.path.exists(f'{databases_dir}/{fn}'):
-                missing.append(fn)
-        if missing:
-            flag = 0
-            with open('dpam_databases_missing_files','w') as f:
-                f.write('\n'.join(missing)+'\n')
-            print(f"Files missing for databases. Please check {path}/dpam_databases_missing_files for details")
-        else:
-            if os.path.exists('dpam_databases_missing_files'):
-                os.system('rm dpam_databases_missing_files')
+# Too slow to check
+# def check_databases(databases_dir):
+#     path = os.getcwd()
+#     flag = 1
+#     if not os.path.exists(databases_dir):
+#         print (databases_dir, 'does not exist')
+#         flag = 0
+#     else:
+#         missing = []
+#         with open(f'{databases_dir}/all_files') as f:
+#             all_files = f.readlines()
+#         all_files = [i.strip() for i in all_files]
+#         for fn in all_files:
+#             if not os.path.exists(f'{databases_dir}/{fn}'):
+#                 missing.append(fn)
+#         if missing:
+#             flag = 0
+#             with open('dpam_databases_missing_files','w') as f:
+#                 f.write('\n'.join(missing)+'\n')
+#             print(f"Files missing for databases. Please check {path}/dpam_databases_missing_files for details")
+#         else:
+#             if os.path.exists('dpam_databases_missing_files'):
+#                 os.system('rm dpam_databases_missing_files')
     return flag
 
 def check_inputs(input_dir,dataset):
@@ -77,7 +77,6 @@ def run_singularity_container(image_name, databases_dir, input_dir, dataset, thr
     exec_command = (
         f"singularity exec --bind {databases_dir}:/mnt/databases:ro "
         f"--bind {input_dir}:{wdir}:rw "
-        f"--bind /scratch/ymeng/DPAM/docker/scripts/run_step3.py:/opt/DPAM/scripts/run_step3.py:ro "
         f"{image_name} "
         f"/bin/bash -c 'cd {wdir};run_dpam.py {dataset} {threads}'"
     )
@@ -120,7 +119,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     print("Checking databases...")
-    db_flag = check_databases(args.databases_dir)
+    db_flag = os.path.exists(args.databases_dir)
     if db_flag == 0:
         print("Databases are not complete")
         sys.exit(1)
