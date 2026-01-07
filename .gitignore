@@ -2,3 +2,6 @@ databases/
 databases.tar.gz
 dpam.sif
 *.out
+logs/
+input/
+example/
