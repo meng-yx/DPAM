@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=dpam
-#SBATCH --output=logs/dpam-%j.out
-#SBATCH --error=logs/dpam-%j.out
+#SBATCH --output=logs/dpam_array_%A/dpam-%A_%a.out
+#SBATCH --error=logs/dpam_array_%A/dpam-%A_%a.out
 #SBATCH --time=4:00:00
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=16GB
+#SBATCH --cpus-per-task=32
+#SBATCH --mem=128GB
 
 # Always run from the root directory
 root_dir=$(git rev-parse --show-toplevel)
@@ -17,7 +17,7 @@ echo "CPUs: $SLURM_CPUS_PER_TASK"
 
 
 # Define path to the _struc.list file containing the UniProt IDs of the models to download
-list_path="$1"
+list_path=pacini_results/subset_${SLURM_ARRAY_TASK_ID}_struc.list
 list_path=$(realpath $list_path)
 list_dir=$(dirname $list_path)
 list_name=$(basename "$list_path" "_struc.list")

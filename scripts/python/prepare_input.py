@@ -82,4 +82,14 @@ if __name__ == "__main__":
     with open(list_path, "r") as f:
         for line in f:
             uniprot_id = line.strip()
-            download_af2_model(uniprot_id, download_dir)
+            pdb_url = download_af2_model(uniprot_id, download_dir)
+
+            # If pdb_url is None, remove the uniprot_id from the list
+            if pdb_url is None:
+                print(f"Failed to download PDB file for {uniprot_id}, removing from list")
+                with open(list_path, "r") as f:
+                    lines = f.readlines()
+                with open(list_path, "w") as f:
+                    for line in lines:
+                        if line.strip() != uniprot_id:
+                            f.write(line)
