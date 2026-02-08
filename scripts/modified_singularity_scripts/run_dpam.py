@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os, sys, time, subprocess
+import os, sys, subprocess
 dataset = sys.argv[1]
 ncore = sys.argv[2]
 wd = os.getcwd()
