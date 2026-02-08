@@ -62,7 +62,7 @@ def download_af2_model(uniprot_id, out_dir):
         msa_path = os.path.join(out_dir, msa_filename)
         msa_response = requests.get(msa_url)
         if msa_response.status_code != 200:
-            print(f"Failed to download MSA a3m file for {uniprot_id} at {paeDocUrl} (HTTP {pae_response.status_code})")
+            print(f"Failed to download MSA a3m file for {uniprot_id} at {msa_url} (HTTP {msa_response.status_code})")
             return None
         with open(msa_path, "wb") as f:
             f.write(msa_response.content)
