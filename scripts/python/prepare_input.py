@@ -29,6 +29,7 @@ def download_af2_model(uniprot_id, out_dir):
             return None
         pdb_url = api_json[0]['pdbUrl']
         paeDocUrl = api_json[0]['paeDocUrl']
+        msa_url = api_json[0]['msaUrl']
     except Exception as e:
         print(f"Error fetching/parsing AlphaFold API response: {e}")
         return None
@@ -55,6 +56,16 @@ def download_af2_model(uniprot_id, out_dir):
             return None
         with open(pae_path, "wb") as f:
             f.write(pae_response.content)
+
+        # Download the MSA a3m file
+        msa_filename = f"{uniprot_id}.a3m"
+        msa_path = os.path.join(out_dir, msa_filename)
+        msa_response = requests.get(msa_url)
+        if msa_response.status_code != 200:
+            print(f"Failed to download MSA a3m file for {uniprot_id} at {msa_url} (HTTP {msa_response.status_code})")
+            return None
+        with open(msa_path, "wb") as f:
+            f.write(msa_response.content)
 
         return pdb_filename
     except Exception as e:

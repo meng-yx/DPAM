@@ -72,14 +72,29 @@ def run_singularity_container(image_name, databases_dir, input_dir, dataset, thr
     print("Constructing wdir...")
     wdir = f'/home/{input_dir.split("/")[-1]}'
 
-    # Building the Singularity exec command with bind mounts
-    print("Constructing exec command...")
-    exec_command = (
-        f"singularity exec --bind {databases_dir}:/mnt/databases:ro "
-        f"--bind {input_dir}:{wdir}:rw "
-        f"{image_name} "
-        f"/bin/bash -c 'cd {wdir};run_dpam.py {dataset} {threads}'"
-    )
+    # Get absolute path to singularity modified scripts directory
+    this_file_path = os.path.abspath(os.path.dirname(__file__))
+    mod_scripts_dir = os.path.join(this_file_path, 'scripts', 'modified_singularity_scripts') 
+    
+    # Check if modified scripts exist
+    if not os.path.exists(mod_scripts_dir):
+        print(f"Warning: {mod_scripts_dir} does not exist. Using default scripts from container.")
+        # Building the Singularity exec command with bind mounts (original version)
+        exec_command = (
+            f"singularity exec --bind {databases_dir}:/mnt/databases:ro "
+            f"--bind {input_dir}:{wdir}:rw {image_name} "
+            f"/bin/bash -c 'cd {wdir};run_dpam.py {dataset} {threads}'"
+        )
+    else:
+        print(f"Using modified scripts from {mod_scripts_dir}")
+        # Building the Singularity exec command with bind mounts INCLUDING modified scripts
+        exec_command = (
+            f"singularity exec --bind {databases_dir}:/mnt/databases:ro "
+            f"--bind {input_dir}:{wdir}:rw "
+            f"--bind {mod_scripts_dir}:/opt/DPAM/scripts:ro "
+            f"{image_name} "
+            f"/bin/bash -c 'cd {wdir};run_dpam.py {dataset} {threads}'"
+        )
 
     # Running the container
     try:
