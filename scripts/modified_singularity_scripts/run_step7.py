@@ -13,7 +13,6 @@ def batch_run(cmds,process_num):
     pool = Pool(processes=process_num)
     result = []
     for cmd in cmds:
-        sample=cmd.split()[2]
         process = pool.apply_async(run_cmd,(cmd,))
         result.append(process)
     for process in result:
