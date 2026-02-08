@@ -1,5 +1,5 @@
 #!/opt/conda/bin/python
-import sys
+import sys, os
 
 def get_range(resids):
     if resids:
@@ -25,7 +25,15 @@ def get_range(resids):
 
 
 dataset = sys.argv[1]
-fp = open('step21_' + dataset + '.result', 'r')
+result_file = 'step21_' + dataset + '.result'
+
+# Check if step21 result file exists
+if not os.path.exists(result_file):
+    # Create empty step22 result file
+    open('step22_' + dataset + '.result', 'w').close()
+    sys.exit(0)
+
+fp = open(result_file, 'r')
 get_prots = set([])
 prot2merges = {}
 domain2resids = {}

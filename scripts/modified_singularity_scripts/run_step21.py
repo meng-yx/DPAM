@@ -32,6 +32,13 @@ for line in fp:
     prots.append(prot)
 fp.close()
 
+# If no result files found, create empty step21 result and exit
+if not prots:
+    open('step21_' + dataset + '.result', 'w').close()
+    with open(dataset + '_step21.log','w') as f:
+        f.write('done\n')
+    sys.exit(0)
+
 cases = []
 all_cases = set([])
 for prot in prots:
