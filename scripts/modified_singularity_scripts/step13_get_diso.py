@@ -1,6 +1,5 @@
 #!/opt/conda/bin/python
-import sys, os, time, json, math, string
-import numpy as np
+import sys, os, json
 
 dataset = sys.argv[1]
 prot = sys.argv[2]

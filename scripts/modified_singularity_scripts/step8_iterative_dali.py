@@ -1,6 +1,6 @@
 #!/opt/conda/bin/python
 import os, sys
-import time, subprocess
+import subprocess
 from multiprocessing import Pool
 
 wdir = os.getcwd()

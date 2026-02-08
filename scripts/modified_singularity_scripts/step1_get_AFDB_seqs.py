@@ -1,6 +1,5 @@
 #!/usr1/local/bin/python
 import os, sys
-import pdbx
 from pdbx.reader.PdbxReader import PdbxReader
 
 three2one = {}

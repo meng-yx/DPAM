@@ -1,6 +1,5 @@
 #!/opt/conda/bin/python
 import os, sys
-import numpy as np
 
 def get_resids(domain_range):
     domain_resids = []

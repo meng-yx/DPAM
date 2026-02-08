@@ -1,6 +1,5 @@
 #!/opt/conda/bin/python
 import os, sys
-import numpy as np
 
 dataset = sys.argv[1]
 prot = sys.argv[2]

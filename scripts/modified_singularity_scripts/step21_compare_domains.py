@@ -1,5 +1,5 @@
 #!/opt/conda/bin/python
-import os, sys
+import sys
 
 def get_seq_dist(residsA, residsB, good_resids):
     indsA = []
