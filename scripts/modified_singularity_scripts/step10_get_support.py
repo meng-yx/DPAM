@@ -1,5 +1,5 @@
 #!/opt/conda/bin/python
-import os, sys, subprocess
+import os, sys
 
 
 def get_range(resids):
