@@ -7,3 +7,5 @@ input/
 example/
 pacini_results/
 data/
+DPAM-AI_AFDB_domainome_v6/
+*.pyc
