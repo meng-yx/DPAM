@@ -1,4 +1,10 @@
-# Written by Mohd Ibrahim
+# Modified version by Yanxiang Meng
+# 2026-02-19 
+# This version is modified to add ACE and NME capping groups to termini of all discontinuous segments,
+# not just the first and last residues in a chain
+
+
+# Original version written by Mohd Ibrahim
 # Technical University of Munich
 # Email: ibrahim.mohd@tum.de
 import numpy as np
@@ -117,59 +123,69 @@ def get_ace_pos (end_residue):
 
 
 def add_caps(u):
-    """Add ACE and NME capping groups to protein termini. Returns merged universe."""
+    """Add ACE and NME capping groups to protein termini. For discontinuous segments
+    (gaps in residue numbering), caps each continuous run. Returns merged universe."""
     segment_universes = []
 
     for seg in u.segments:
 
         chain = u.select_atoms(f"segid {seg.segid}")
+        resids = np.sort(np.unique(chain.residues.resids))
 
-        # Add ACE
-        resid_c = chain.residues.resids [0]
-        end_residue = u.select_atoms(f"segid {seg.segid} and resid {resid_c}")
-        ace_positions = get_ace_pos (end_residue)
-        ace_names = ["C", "CH3", "O"]
-        resid = chain.residues.resids[-1] + 1  # ACE = last_resid + 1
-        kwargs = dict (n_atoms=len(ace_positions), name=ace_names,
-                        resname=len(ace_names)*["ACE"], positions=ace_positions,
-                        resids=resid*np.ones(len(ace_names)),
-                        segid=chain.segids[0])
+        # Split into continuous runs (gap when resid[i] - resid[i-1] > 1)
+        runs = []
+        run_start = resids[0]
+        for i in range(1, len(resids)):
+            if resids[i] - resids[i - 1] > 1:
+                runs.append((run_start, resids[i - 1]))
+                run_start = resids[i]
+        runs.append((run_start, resids[-1]))
 
-        ace_universe =  create_universe (**kwargs)
+        run_universes = []
+        for first_resid, last_resid in runs:
 
-        # Add NME
-        resid_c     = chain.residues.resids [-1]
-        end_residue = u.select_atoms(f"segid {seg.segid} and resid {resid_c}")
+            # NME before first residue (N-terminal cap)
+            first_residue = u.select_atoms(f"segid {seg.segid} and resid {first_resid}")
+            ace_positions = get_ace_pos(first_residue)
+            ace_names = ["C", "CH3", "O"]
+            ace_resid = last_resid + 1  # ACE = last_resid + 1
+            ace_universe = create_universe(
+                n_atoms=len(ace_positions), name=ace_names,
+                resname=len(ace_names) * ["ACE"], positions=ace_positions,
+                resids=ace_resid * np.ones(len(ace_names)),
+                segid=chain.segids[0]
+            )
 
+            # ACE after last residue (C-terminal cap)
+            last_residue = u.select_atoms(f"segid {seg.segid} and resid {last_resid}")
+            nme_positions = get_nme_pos(last_residue)
+            nme_names = ["N", "C"]
+            nme_resid = first_resid - 1  # NME = first_resid - 1
+            nme_universe = create_universe(
+                n_atoms=len(nme_names), name=nme_names,
+                resname=len(nme_names) * ["NME"], positions=nme_positions,
+                resids=nme_resid * np.ones(len(nme_names)),
+                segid=chain.segids[0]
+            )
 
-        nme_positions = get_nme_pos (end_residue)
-        nme_names   = ["N", "C"]
+            # Select run atoms (resid first_resid to last_resid)
+            run_atoms = u.select_atoms(
+                f"segid {seg.segid} and resid {first_resid}:{last_resid}"
+            )
 
-        resid = chain.residues.resids[0] - 1  # NME = first_resid - 1
+            # Remove OXT from last residue if present
+            if "OXT" in last_residue.names:
+                oxt_idx = np.where(last_residue.names == "OXT")[0][0]
+                oxt_atom = last_residue[oxt_idx]
+                run_atoms = run_atoms - oxt_atom
 
-        kwargs = dict (n_atoms=len(nme_names), name=nme_names,
-                        resname=len(nme_names)*["NME"], positions=nme_positions,
-                        resids=resid*np.ones(len(nme_names)),
-                        segid=chain.segids[0])
+            # Merge NME + run + ACE
+            u_run = mda.Merge(nme_universe.atoms, run_atoms, ace_universe.atoms)
+            run_universes.append(u_run)
 
-        nme_universe =  create_universe (**kwargs)
-        ## Merge Universe
-        if "OXT" in end_residue.names:
-
-            index = np.where (end_residue.names == "OXT")[0][0]
-            OXT   = end_residue [index]
-
-            Chain     = u.select_atoms(f"segid {seg.segid} and not index {OXT.index}")
-
-        else:
-
-            Chain     = u.select_atoms(f"segid {seg.segid}")
-
-        ### Merge ACE, Protien and NME
-
-        u_all = mda.Merge (nme_universe.atoms, Chain, ace_universe.atoms)
-
-        segment_universes.append (u_all)
+        # Merge all runs for this segment
+        u_seg = mda.Merge(*(ru.atoms for ru in run_universes))
+        segment_universes.append(u_seg)
 
     ## Join all the universes
     all_uni = mda.Merge(*(seg.atoms for seg in segment_universes))
