@@ -152,14 +152,14 @@ def pdb_to_sequence(structure, chain="A"):
 # -----------------------------------------------------------------------------
 
 
-def get_uniprot_entry(uniprot_id, max_retries=3, uniprot_delay=UNIPROT_DELAY_SEC):
+def get_uniprot_entry(uniprot_id, max_retries=3, uniprot_delay=UNIPROT_DELAY_SEC, timeout=30):
     """Fetch full UniProt entry from REST API with retries and throttling."""
     url = f"https://rest.uniprot.org/uniprotkb/{uniprot_id}.json"
     last_error = None
     for attempt in range(max_retries):
         time.sleep(uniprot_delay)
         try:
-            response = requests.get(url, timeout=30)
+            response = requests.get(url, timeout=timeout)
             if response.ok:
                 return response.json()
             if response.status_code in (429, 500, 502, 503):
